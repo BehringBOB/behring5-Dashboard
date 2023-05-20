@@ -1,95 +1,102 @@
 // TRANSPORTATION
 
-const baumeID = 900191001 //station ID of baumschulenweg
-
-const bvgURL = 'https://v5.bvg.transport.rest/stops/900191001/departures?duration=20&results=10&linesOfStops=false&remarks=false&language=de'
+const locationID = 900191001; //station ID of baumschulenweg
+const bvgURL = 'https://v5.bvg.transport.rest/stops/' + locationID + '/departures?duration=20&results=10&linesOfStops=false&remarks=false&language=de';
 
 loadDeparture = (station) => {
-  fetch(bvgURL)
-    .then((response) => {
-      return response.json()
-    })
-    .then((data) => {
-      const allDepartures = [] //collecting all deartures in an array
+	fetch(bvgURL)
+		.then((response) => {
+			return response.json();
+		})
+		.then((data) => {
+			const allDepartures = []; //collecting all departures in an array
 
-      for (i = 0; i < data.length; i++) {
-        allDepartures.push(data[i].destination.id)
+			console.log(data);
+			for (i = 0; i < data.length; i++) {
+				allDepartures.push(data[i].destination.id);
+				createDeparture(data[i], i);
+			}
+		})
+		.catch((error) => {
+			console.log("couldn't load transportation data");
+		});
+};
 
-        createDeparture(data[i])
-      }
-      console.log(allDepartures)
-    })
-    .catch((error) => {
-      console.log("couldn't load transportation data")
-    })
-}
+const list = document.getElementById('transportationList');
 
-const list = document.getElementById('transportationList')
+createDeparture = (data, index) => {
+	const departure = document.createElement('div');
+	departure.classList.add('departure');
 
-createDeparture = (data) => {
-  console.log(data)
-  const departure = document.createElement('div')
-  departure.id = data.destination.id
+	//using the index of the loop for the animationdelay
+	departure.style.animationDelay = index * 0.05 + 's';
 
-  //departure time
-  let a = document.createElement('div')
-  a.innerHTML = data.plannedWhen.substr(11, 5)
-  departure.appendChild(a)
+	//departure time
+	let a = document.createElement('div');
+	a.innerHTML = data.plannedWhen.substr(11, 5);
+	departure.appendChild(a);
 
-  const delaytime = document.createElement('div')
-  delaytime.classList.add('delay')
+	// delay time
+	let delaytime = document.createElement('div');
+	delaytime.classList.add('delay');
 
-  // if there is a delay, calculate delay
-  if (data.prognosisType == 'prognosed') {
-    console.log(data.prognosisType)
+	// if there is a delay, calculate delay
+	if (data.prognosisType == 'prognosed') {
+		//console.log(data.prognosisType)
+		let verspätung = 1; //default verspätung (1 min)
+		let wievielVerspätung = new Date(data.when.substr(0, 19)) - new Date(data.plannedWhen.substr(0, 19));
 
-    let verspätung = 1 //default verspätung (1 min)
-    const wievielVerspätung = new Date(data.when.substr(0, 19)) - new Date(data.plannedWhen.substr(0, 19))
+		if (wievielVerspätung >= 6000) {
+			verspätung = wievielVerspätung / 60000;
+		}
 
-    if (wievielVerspätung >= 6000) {
-      verspätung = wievielVerspätung / 60000
-    }
+		delaytime.innerHTML = '+' + verspätung;
+	}
+	//adding delaytime div, no matter if delay or not, for better alignment
+	departure.appendChild(delaytime);
 
-    delaytime.innerHTML = '+' + verspätung
-  }
-  //appending delay time
-  departure.appendChild(delaytime)
+	// type of transportaion
+	let lineType = document.createElement('div');
+	lineType.classList.add('lineType');
+	let img = new Image();
+	if (data.line.mode == 'bus') {
+		img.src = './assets/transportation/bus.svg';
+	} else if (data.line.mode == 'train') {
+		img.src = './assets/transportation/sbahn.svg';
+	}
 
-  const lineType = document.createElement('div')
-  lineType.classList.add('lineType')
+	lineType.appendChild(img);
+	departure.appendChild(lineType);
 
-  let img = new Image()
-  if (data.line.mode == 'bus') {
-    img.src = './assets/transportation/bus.svg'
-  } else if (data.line.mode == 'train') {
-    img.src = './assets/transportation/sbahn.svg'
-  }
+	// line number
+	let line = document.createElement('div');
+	line.classList.add('line');
+	line.classList.add(data.line.mode);
+	line.innerHTML = data.line.id;
+	departure.appendChild(line);
 
-  lineType.appendChild(img)
-  departure.appendChild(lineType)
+	//direction
+	let b = document.createElement('div');
+	b.innerHTML = data.direction;
+	departure.appendChild(b);
 
-  /* transportation line */
-  const line = document.createElement('div')
-  line.classList.add('line')
-  line.classList.add(data.line.mode)
+	list.appendChild(departure);
+};
 
-  //console.log(data[i].line.mode)
-  line.innerHTML = data.line.id
-
-  //line.insertBefore(img)
-
-  departure.appendChild(line)
-
-  const b = document.createElement('div')
-  b.innerHTML = data.direction
-  departure.appendChild(b)
-
-  list.appendChild(departure)
-}
-
-loadDeparture(baumeID)
+loadDeparture(locationID);
 
 setInterval(function () {
-  document.getElementById('transportationList').innerHTML = ''
-  loadDeparture(baumeID)
-}, 60000)
+	let departures = document.getElementsByClassName('departure');
+
+	for (i = 0; i < departures.length; i++) {
+		departures[i].classList.add('hide');
+
+		//find last element --> after animation is done, reload transportation data
+		if (i + 1 == departures.length) {
+			departures[i].addEventListener('animationend', function () {
+				document.getElementById('transportationList').innerHTML = '';
+				loadDeparture(locationID);
+			});
+		}
+	}
+}, 60000);
