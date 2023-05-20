@@ -1,90 +1,116 @@
-const weatherLocation = [52.467582, 13.489501] //Baume
-const apiURL = 'https://api.openweathermap.org/data/2.5/'
-const apiQuery = '?lat=' + weatherLocation[0] + '&lon=' + weatherLocation[1] + '&units=metric&lang=de&appid=' + weather_KEY
+const weatherLocation = [52.467582, 13.489501]; //Baume
+const apiURL = 'https://api.openweathermap.org/data/2.5/';
+const apiQuery = '?lat=' + weatherLocation[0] + '&lon=' + weatherLocation[1] + '&units=metric&lang=de&appid=' + weather_KEY;
 //console.log(apiURL + 'weather' + apiQuery)
 
+const weatherCurrentDiv = document.getElementById('weatherCurrent');
+const forcastDiv = document.getElementById('forcast');
+
 loadWeather = (type) => {
-  let url = apiURL + type + apiQuery
-  //limit amount of timestamps if forcast in query
-  if (type == 'forecast') {
-    url += '&cnt=6'
-  }
+	var url = apiURL + type + apiQuery;
 
-  fetch(url)
-    .then((response) => {
-      return response.json()
-    })
-    .then((data) => {
-      //actual weather
-      if (type == 'weather') {
-        //console.log(data)
-        //if actual weather
-        const forcastDiv = document.getElementById('weatherCurrent')
+	//limit amount of timestamps if forcast in query
+	if (type == 'forecast') {
+		url += '&cnt=6';
+	}
 
-        const img = new Image()
-        img.src = './assets/weather/' + data.weather[0].icon + '.svg'
-        forcastDiv.appendChild(img)
+	//to avoid API block during dev times I use local example data ( using getQueryParam() in config.js )
+	if (getQueryParam('dev')) {
+		if (type == 'weather') {
+			var url = './assets//weather_example_current.json';
+			console.log('loading local curretWeather JSON for dev');
+		} else if (type == 'forecast') {
+			var url = './assets/weather_example_forecast.json';
+			console.log('loading local forecast JSON for dev');
+		}
+	}
 
-        const a = document.createElement('span')
-        a.id = 'temp_now'
-        a.innerHTML = Math.round(data.main.temp) + '°'
-        forcastDiv.appendChild(a)
+	fetch(url)
+		.then((response) => {
+			return response.json();
+		})
+		.then((data) => {
+			//
+			//
+			//currentweather
+			if (type == 'weather') {
+				//console.log(data);
+				weatherCurrentDiv.innerHTML = ''; //empty current Weather div before refilling it
 
-        const b = document.createElement('span')
-        b.id = 'weatherDescription'
-        b.innerHTML = data.weather[0].description
-        forcastDiv.appendChild(b)
+				const img = new Image();
+				img.src = './assets/weather/' + data.weather[0].icon + '.svg';
+				weatherCurrentDiv.appendChild(img);
 
-        const c = document.createElement('span')
-        c.id = 'location'
-        c.innerHTML = data.name
-        forcastDiv.appendChild(c)
+				const a = document.createElement('span');
+				a.id = 'temp_now';
+				a.innerHTML = Math.round(data.main.temp) + '°';
+				weatherCurrentDiv.appendChild(a);
 
-        // forcast weather
-      } else if (type == 'forecast') {
-        const forcast = data.list
-        const forcastDiv = document.getElementById('forcast')
+				const b = document.createElement('span');
+				b.id = 'weatherDescription';
+				b.innerHTML = data.weather[0].description;
+				weatherCurrentDiv.appendChild(b);
 
-        //create the upcomming three forecast datablocks in #forcast
-        for (i = 1; i < forcast.length; i++) {
-          const a = document.createElement('span')
-          a.classList.add('forcastBlock')
+				const c = document.createElement('span');
+				c.id = 'location';
+				c.innerHTML = data.name;
+				weatherCurrentDiv.appendChild(c);
 
-          const img = new Image()
-          img.src = './assets/weather/' + forcast[i].weather[0].icon + '.svg'
-          a.appendChild(img)
+				//
+				//
+				// forcast weather
+			} else if (type == 'forecast') {
+				forcastDiv.innerHTML = ''; //empty forcast div before refilling it
 
-          const b = document.createElement('span')
-          b.innerHTML = Math.round(forcast[i].main.temp) + '°'
-          a.appendChild(b)
+				const forcast = data.list;
+				//create the upcomming three forecast datablocks in #forcast
+				for (i = 1; i < forcast.length; i++) {
+					const a = document.createElement('span');
+					a.classList.add('forcastBlock');
 
-          const d = document.createElement('span')
-          d.innerHTML = forcast[i].dt_txt.substr(11, 5)
-          a.appendChild(d)
+					const img = new Image();
+					img.src = './assets/weather/' + forcast[i].weather[0].icon + '.svg';
+					a.appendChild(img);
 
-          const c = document.createElement('span')
-          c.innerHTML = forcast[i].weather[0].description
-          a.appendChild(c)
+					const b = document.createElement('span');
+					b.innerHTML = Math.round(forcast[i].main.temp) + '°';
+					a.appendChild(b);
 
-          forcastDiv.appendChild(a)
+					const d = document.createElement('span');
+					d.innerHTML = forcast[i].dt_txt.substr(11, 5);
+					a.appendChild(d);
 
-          //console.log(forcast[i])
-        }
-      }
-      //console.log(data)
-    })
-    .catch((error) => {
-      console.log("couldn't load weather data")
-    })
+					const c = document.createElement('span');
+					c.innerHTML = forcast[i].weather[0].description;
+					a.appendChild(c);
 
-  //console.log(url)
-}
+					forcastDiv.appendChild(a);
+					//console.log(forcast[i])
+				}
+			}
+			//console.log(data)
+		})
+		.catch((error) => {
+			console.log("couldn't load weather data");
+		});
 
-loadWeather('weather')
-loadWeather('forecast')
+	//console.log(url)
+};
+
+loadWeather('weather');
+loadWeather('forecast');
+
 setInterval(function () {
-  document.getElementById('weatherCurrent').innerHTML = ''
-  document.getElementById('forcast').innerHTML = ''
-  loadWeather('weather')
-  loadWeather('forecast')
-}, 120000)
+	weatherCurrentDiv.classList.toggle('hide');
+	forcastDiv.classList.toggle('hide');
+
+	weatherCurrentDiv.addEventListener('animationend', (animation) => {
+		console.log();
+		if (animation.animationName == 'hide') {
+			loadWeather('weather');
+			loadWeather('forecast');
+		}
+	});
+}, 120000);
+
+//120000
