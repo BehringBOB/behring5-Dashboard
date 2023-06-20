@@ -1,8 +1,8 @@
 // TRANSPORTATION
 
 const locationID = 900191001; //station ID of baumschulenweg
-const bvgURL = 'https://v5.bvg.transport.rest/stops/' + locationID + '/departures?duration=20&results=10&linesOfStops=false&remarks=false&language=de';
-
+const bvgURL = 'https://v6.bvg.transport.rest/stops/' + locationID + '/departures?duration=20&results=10&linesOfStops=false&remarks=false&language=de';
+console.log(bvgURL);
 loadDeparture = (station) => {
 	fetch(bvgURL)
 		.then((response) => {
@@ -11,10 +11,13 @@ loadDeparture = (station) => {
 		.then((data) => {
 			const allDepartures = []; //collecting all departures in an array
 
-			console.log(data);
-			for (i = 0; i < data.length; i++) {
-				allDepartures.push(data[i].destination.id);
-				createDeparture(data[i], i);
+			console.log(data.departures);
+			let departures = data.departures;
+
+			for (i = 0; i < departures.length; i++) {
+				console.log(departures[i]);
+				allDepartures.push(departures[i].destination.id);
+				createDeparture(departures[i], i);
 			}
 		})
 		.catch((error) => {

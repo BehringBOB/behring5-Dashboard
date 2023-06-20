@@ -16,7 +16,7 @@ The dashboard is hosted under [behring5.de](https://behring5.de/) and displayed 
   
 ### elements/ideas to add/optimize...
 
-- [ ] optimize data update (visually)
-- [ ] make it responsive to use it also on smartphone
+- [x] optimize data update (visually)
+- [x] make it responsive to use it also on smartphone
 - [ ] adding some other information like maybe news,...
 - [ ] dark/light mode according to daytime for better readabilty
